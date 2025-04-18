@@ -10,7 +10,23 @@ namespace saucer
         [NSApp activateIgnoringOtherApps:YES];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 
-        impl::init_menu();
+        bool noMenu = false;
+        if (opts.argv && opts.argc)
+        {
+            for (int i=0; i<*opts.argc; i++)
+            {
+              std::string s = (*opts.argv)[i];
+              if (s == "no-menu")
+              {
+                  printf("no-menu\n");
+                  noMenu = true;
+              }
+            }
+        }
+        if (!noMenu)
+        {
+          impl::init_menu();
+        }
     }
 
     application::~application() = default;

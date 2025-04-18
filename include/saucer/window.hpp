@@ -65,6 +65,7 @@ namespace saucer
         fs::path storage_path;
         std::string user_agent;
         std::set<std::string> browser_flags;
+        void *parentView;
     };
 
     struct window

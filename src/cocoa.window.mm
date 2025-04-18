@@ -19,17 +19,20 @@ namespace saucer
 
         const utils::autorelease_guard guard{};
 
-        m_impl->window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600)
-                                                     styleMask:mask
-                                                       backing:NSBackingStoreBuffered
-                                                         defer:NO];
+       if (!prefs.parentView)
+       {
+          m_impl->window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600)
+                                                       styleMask:mask
+                                                         backing:NSBackingStoreBuffered
+                                                           defer:NO];
 
-        set_resizable(true);
+          set_resizable(true);
 
-        m_impl->delegate = [[WindowDelegate alloc] initWithParent:this];
+          m_impl->delegate = [[WindowDelegate alloc] initWithParent:this];
 
-        [m_impl->window setDelegate:m_impl->delegate.get()];
-        [m_impl->window center];
+          [m_impl->window setDelegate:m_impl->delegate.get()];
+          [m_impl->window center];
+       }
     }
 
     window::~window()
@@ -44,7 +47,10 @@ namespace saucer
         // We hide-on-close, so we call trigger two different close calls to properly quit.
 
         close();
-        [m_impl->window close];
+        if (m_impl->window)
+        {
+          [m_impl->window close];
+        }
     }
 
     bool window::visible() const

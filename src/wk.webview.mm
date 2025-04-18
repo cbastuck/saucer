@@ -59,6 +59,8 @@ namespace saucer
 
         [m_impl->config.get() setWebsiteDataStore:store];
 
+        auto parent = prefs.parentView ? (NSView*)prefs.parentView : nullptr;
+
 #ifdef SAUCER_WEBKIT_PRIVATE
         auto *const settings = m_impl->config.get().preferences;
         [settings setValue:@YES forKey:@"fullScreenEnabled"];
@@ -82,14 +84,17 @@ namespace saucer
             m_impl->web_view.get().customUserAgent = [NSString stringWithUTF8String:prefs.user_agent.c_str()];
         }
 
-        m_impl->view = [[NSView alloc] init];
+        m_impl->view = parent ? parent : [[NSView alloc] init];
 
         [m_impl->view.get() setAutoresizesSubviews:YES];
         [m_impl->view.get() addSubview:m_impl->web_view.get()];
         [m_impl->web_view.get() setFrame:m_impl->view.get().bounds];
 
-        window::m_impl->window.contentView = m_impl->view.get();
-        m_impl->appearance                 = window::m_impl->window.appearance;
+        if (!parent)
+        {
+          window::m_impl->window.contentView = m_impl->view.get();
+          m_impl->appearance                 = window::m_impl->window.appearance;
+        }   
 
         window::m_impl->on_closed = [this]
         {

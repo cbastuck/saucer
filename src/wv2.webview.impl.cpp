@@ -95,7 +95,8 @@ namespace saucer
             temp_path          = prefs.storage_path;
         }
 
-        auto created = [this](auto, auto *result)
+        bool usingChildView = prefs.parentView != nullptr;
+        auto created        = [this, hwnd, usingChildView](auto, auto *result)
         {
             controller = result;
 
@@ -110,6 +111,15 @@ namespace saucer
             {
                 assert(false && "Failed to get CoreWebView2_2");
             }
+
+            if (usingChildView) // Set initial bounds for the WebView2 controller in the non resizable case
+            {
+                RECT clientRect;
+                GetClientRect(hwnd, &clientRect);
+                controller->put_Bounds(clientRect);
+                controller->put_IsVisible(TRUE);
+            }
+            
 
             return S_OK;
         };

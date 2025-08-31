@@ -26,22 +26,62 @@ namespace saucer
 
         utils::set_dpi_awareness();
 
-        m_impl->hwnd = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP,             //
-                                       m_parent->native<false>()->id.c_str(), //
-                                       L"",                                   //
-                                       style,                                 //
-                                       CW_USEDEFAULT,                         //
-                                       CW_USEDEFAULT,                         //
-                                       CW_USEDEFAULT,                         //
-                                       CW_USEDEFAULT,                         //
-                                       nullptr,                               //
-                                       nullptr,                               //
-                                       m_parent->native<false>()->handle,     //
-                                       nullptr);
+
+        if (prefs.parentView)
+        {
+            RECT parentRect;
+            GetClientRect((HWND)prefs.parentView, &parentRect); // Get client area of parent
+
+            int parentWidth  = parentRect.right - parentRect.left;
+            int parentHeight = parentRect.bottom - parentRect.top;
+            
+            // Use child window styles for WebView2 embedding
+            DWORD childStyles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+            DWORD childExStyles = WS_EX_CONTROLPARENT | WS_EX_NOREDIRECTIONBITMAP;
+            
+            m_impl->hwnd = CreateWindowExW(childExStyles,
+                                          m_parent->native<false>()->id.c_str(),
+                                          L"",
+                                          childStyles,
+                                          0, // Start at 0,0 in parent
+                                          0,
+                                          parentWidth,
+                                          parentHeight,
+                                          (HWND)prefs.parentView,
+                                          nullptr,
+                                          m_parent->native<false>()->handle,
+                                          nullptr);
+        }
+        else
+        {
+            m_impl->hwnd = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP, //
+                            m_parent->native<false>()->id.c_str(), //
+                            L"",                                   //
+                            style,                                 //
+                            CW_USEDEFAULT,                         //
+                            CW_USEDEFAULT,                         //
+                            CW_USEDEFAULT,                         //
+                            CW_USEDEFAULT,                         //
+                            nullptr,                               //
+                            nullptr,                               //
+                            m_parent->native<false>()->handle,     //
+                            nullptr);
+        }
+            
 
         assert(m_impl->hwnd.get() && "CreateWindowExW() failed");
 
-        set_resizable(true);
+        if (prefs.parentView)
+        {
+            // For child windows, don't set any additional styles
+            // The WS_CHILD style set during CreateWindowExW is sufficient
+            // Don't call set_resizable() as it would apply inappropriate top-level window styles
+        }
+        else
+        {
+            set_resizable(true);
+        }
+        
 
         m_impl->o_wnd_proc = utils::overwrite_wndproc(m_impl->hwnd.get(), impl::wnd_proc);
 
@@ -382,7 +422,6 @@ namespace saucer
         {
             m_impl->styles &= ~flags;
         }
-
         impl::set_style(m_impl->hwnd.get(), style | m_impl->styles);
     }
 

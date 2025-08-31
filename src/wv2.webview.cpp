@@ -25,8 +25,10 @@ namespace saucer
         static std::once_flag flag;
         std::call_once(flag, [] { register_scheme("saucer"); });
 
-        m_impl->o_wnd_proc = utils::overwrite_wndproc(window::m_impl->hwnd.get(), impl::wnd_proc);
-        m_impl->create_webview(m_parent, window::m_impl->hwnd.get(), prefs);
+        HWND hwnd = window::m_impl->hwnd.get();
+
+        m_impl->o_wnd_proc = utils::overwrite_wndproc(hwnd, impl::wnd_proc);
+        m_impl->create_webview(m_parent, hwnd, prefs);
 
         m_impl->web_view->get_Settings(&m_impl->settings);
         m_impl->settings->put_IsStatusBarEnabled(false);

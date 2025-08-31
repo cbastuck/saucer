@@ -26,22 +26,59 @@ namespace saucer
 
         utils::set_dpi_awareness();
 
-        m_impl->hwnd = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP,             //
-                                       m_parent->native<false>()->id.c_str(), //
-                                       L"",                                   //
-                                       style,                                 //
-                                       CW_USEDEFAULT,                         //
-                                       CW_USEDEFAULT,                         //
-                                       CW_USEDEFAULT,                         //
-                                       CW_USEDEFAULT,                         //
-                                       nullptr,                               //
-                                       nullptr,                               //
-                                       m_parent->native<false>()->handle,     //
-                                       nullptr);
+
+        if (prefs.parentView)
+        {
+            HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr((HWND)prefs.parentView, GWLP_HINSTANCE);
+            RECT parentRect;
+            GetClientRect((HWND)prefs.parentView, &parentRect); // Get client area of parent
+
+            int parentWidth  = parentRect.right - parentRect.left;
+            int parentHeight = parentRect.bottom - parentRect.top;
+            m_impl->hwnd        = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP,             //
+                                                  m_parent->native<false>()->id.c_str(), //
+                                                  L"",                                   //
+                                                  WS_CHILD,                              //
+                                                  CW_USEDEFAULT,                         //
+                                                  CW_USEDEFAULT,                         //
+                                               parentWidth,                           //
+                                               parentHeight,                          //
+                                                  (HWND)prefs.parentView, 
+                                                  nullptr, 
+                                                  nullptr, //TODO:  m_parent->native<false>()->handle,???
+                                                  nullptr);
+        }
+        else
+        {
+            m_impl->hwnd = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP,             //
+                            m_parent->native<false>()->id.c_str(), //
+                            L"",                                   //
+                            style,                                 //
+                            CW_USEDEFAULT,                         //
+                            CW_USEDEFAULT,                         //
+                            CW_USEDEFAULT,                         //
+                            CW_USEDEFAULT,                         //
+                            nullptr,                               //
+                            nullptr,                               //
+                            m_parent->native<false>()->handle,     //
+                            nullptr);
+        }
+            
 
         assert(m_impl->hwnd.get() && "CreateWindowExW() failed");
 
-        set_resizable(true);
+        if (prefs.parentView)
+        {
+            //set_resizable(false);
+
+            auto style = WS_CAPTION;
+            impl::set_style(m_impl->hwnd.get(), style);
+        }
+        else
+        {
+            set_resizable(true);
+        }
+        
 
         m_impl->o_wnd_proc = utils::overwrite_wndproc(m_impl->hwnd.get(), impl::wnd_proc);
 
@@ -382,7 +419,6 @@ namespace saucer
         {
             m_impl->styles &= ~flags;
         }
-
         impl::set_style(m_impl->hwnd.get(), style | m_impl->styles);
     }
 

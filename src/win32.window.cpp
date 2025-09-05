@@ -29,33 +29,32 @@ namespace saucer
 
         if (prefs.parentView)
         {
-            HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr((HWND)prefs.parentView, GWLP_HINSTANCE);
             RECT parentRect;
             GetClientRect((HWND)prefs.parentView, &parentRect); // Get client area of parent
 
             int parentWidth  = parentRect.right - parentRect.left;
             int parentHeight = parentRect.bottom - parentRect.top;
             
-            // Use proper child window styles for WebView2 embedding
+            // Use child window styles for WebView2 embedding
             DWORD childStyles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
             DWORD childExStyles = WS_EX_CONTROLPARENT | WS_EX_NOREDIRECTIONBITMAP;
             
-            m_impl->hwnd = CreateWindowExW(childExStyles,                               //
-                                          m_parent->native<false>()->id.c_str(),       //
-                                          L"",                                         //
-                                          childStyles,                                 //
-                                          0,                                           // Start at 0,0 in parent
-                                          0,                                           //
-                                          parentWidth,                                 //
-                                          parentHeight,                                //
-                                          (HWND)prefs.parentView,                      //
-                                          nullptr,                                     //
-                                          nullptr, // hInstance ? hInstance : m_parent->native<false>()->handle, //
+            m_impl->hwnd = CreateWindowExW(childExStyles,
+                                          m_parent->native<false>()->id.c_str(),
+                                          L"",
+                                          childStyles,
+                                          0, // Start at 0,0 in parent
+                                          0,
+                                          parentWidth,
+                                          parentHeight,
+                                          (HWND)prefs.parentView,
+                                          nullptr,
+                                          m_parent->native<false>()->handle,
                                           nullptr);
         }
         else
         {
-            m_impl->hwnd = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP,             //
+            m_impl->hwnd = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP, //
                             m_parent->native<false>()->id.c_str(), //
                             L"",                                   //
                             style,                                 //

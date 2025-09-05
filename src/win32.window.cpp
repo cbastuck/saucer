@@ -35,18 +35,23 @@ namespace saucer
 
             int parentWidth  = parentRect.right - parentRect.left;
             int parentHeight = parentRect.bottom - parentRect.top;
-            m_impl->hwnd        = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP,             //
-                                                  m_parent->native<false>()->id.c_str(), //
-                                                  L"",                                   //
-                                                  WS_CHILD,                              //
-                                                  CW_USEDEFAULT,                         //
-                                                  CW_USEDEFAULT,                         //
-                                               parentWidth,                           //
-                                               parentHeight,                          //
-                                                  (HWND)prefs.parentView, 
-                                                  nullptr, 
-                                                  nullptr, //TODO:  m_parent->native<false>()->handle,???
-                                                  nullptr);
+            
+            // Use proper child window styles for WebView2 embedding
+            DWORD childStyles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+            DWORD childExStyles = WS_EX_CONTROLPARENT | WS_EX_NOREDIRECTIONBITMAP;
+            
+            m_impl->hwnd = CreateWindowExW(childExStyles,                               //
+                                          m_parent->native<false>()->id.c_str(),       //
+                                          L"",                                         //
+                                          childStyles,                                 //
+                                          0,                                           // Start at 0,0 in parent
+                                          0,                                           //
+                                          parentWidth,                                 //
+                                          parentHeight,                                //
+                                          (HWND)prefs.parentView,                      //
+                                          nullptr,                                     //
+                                          nullptr, // hInstance ? hInstance : m_parent->native<false>()->handle, //
+                                          nullptr);
         }
         else
         {
@@ -69,10 +74,9 @@ namespace saucer
 
         if (prefs.parentView)
         {
-            //set_resizable(false);
-
-            auto style = WS_CAPTION;
-            impl::set_style(m_impl->hwnd.get(), style);
+            // For child windows, don't set any additional styles
+            // The WS_CHILD style set during CreateWindowExW is sufficient
+            // Don't call set_resizable() as it would apply inappropriate top-level window styles
         }
         else
         {

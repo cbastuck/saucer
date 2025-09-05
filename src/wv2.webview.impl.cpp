@@ -95,7 +95,7 @@ namespace saucer
             temp_path          = prefs.storage_path;
         }
 
-        auto created = [this](auto, auto *result)
+        auto created = [this, hwnd](auto, auto *result)
         {
             controller = result;
 
@@ -110,6 +110,12 @@ namespace saucer
             {
                 assert(false && "Failed to get CoreWebView2_2");
             }
+
+            // Set initial bounds for the WebView2 controller
+            RECT clientRect;
+            GetClientRect(hwnd, &clientRect);
+            controller->put_Bounds(clientRect);
+            controller->put_IsVisible(TRUE);
 
             return S_OK;
         };

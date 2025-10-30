@@ -35,6 +35,10 @@ namespace saucer
             int parentWidth  = parentRect.right - parentRect.left;
             int parentHeight = parentRect.bottom - parentRect.top;
             
+            // Get the DPI scaling factor for the parent window
+            UINT dpi = GetDpiForWindow((HWND)prefs.parentView);
+            float scalingFactor = static_cast<float>(dpi) / 96.0f; // 96 DPI is 100% scaling
+            
             // Use child window styles for WebView2 embedding
             DWORD childStyles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
             DWORD childExStyles = WS_EX_CONTROLPARENT | WS_EX_NOREDIRECTIONBITMAP;
@@ -45,8 +49,8 @@ namespace saucer
                                           childStyles,
                                           0, // Start at 0,0 in parent
                                           0,
-                                          parentWidth,
-                                          parentHeight,
+                                          (int)(parentWidth * scalingFactor),
+                                          (int)(parentHeight * scalingFactor),
                                           (HWND)prefs.parentView,
                                           nullptr,
                                           m_parent->native<false>()->handle,

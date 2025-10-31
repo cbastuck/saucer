@@ -27,9 +27,6 @@ namespace saucer
     {
         assert(m_parent->thread_safe() && "Construction outside of the main-thread is not permitted");
 
-        //utils::set_dpi_awareness();
-
-
         if (prefs.parentView)
         {
             // Detect if the host process is DPI-aware
@@ -57,6 +54,7 @@ namespace saucer
         }
         else
         {
+            utils::set_dpi_awareness();
             m_impl->hwnd = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP, //
                             m_parent->native<false>()->id.c_str(), //
                             L"",                                   //

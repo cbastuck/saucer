@@ -1,4 +1,4 @@
-#include "win32.window.impl.hpp"
+﻿#include "win32.window.impl.hpp"
 
 #include "win32.utils.hpp"
 #include "win32.app.impl.hpp"
@@ -13,6 +13,9 @@
 
 #include <dwmapi.h>
 
+#include <windows.h>
+#include <shellscalingapi.h> // For DPI_AWARENESS_CONTEXT and APIs
+
 template <>
 constexpr bool flagpp::enabled<saucer::window_edge> = true;
 
@@ -24,37 +27,33 @@ namespace saucer
     {
         assert(m_parent->thread_safe() && "Construction outside of the main-thread is not permitted");
 
-        utils::set_dpi_awareness();
+        //utils::set_dpi_awareness();
 
 
         if (prefs.parentView)
         {
-            RECT parentRect;
-            GetClientRect((HWND)prefs.parentView, &parentRect); // Get client area of parent
+            // Detect if the host process is DPI-aware
+            PROCESS_DPI_AWARENESS processAwareness = PROCESS_DPI_UNAWARE;
+            GetProcessDpiAwareness(nullptr, &processAwareness);
 
-            int parentWidth  = parentRect.right - parentRect.left;
-            int parentHeight = parentRect.bottom - parentRect.top;
-            
-            // Get the DPI scaling factor for the parent window
-            UINT dpi = GetDpiForWindow((HWND)prefs.parentView);
-            float scalingFactor = static_cast<float>(dpi) / 96.0f; // 96 DPI is 100% scaling
-            
-            // Use child window styles for WebView2 embedding
-            DWORD childStyles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-            DWORD childExStyles = WS_EX_CONTROLPARENT | WS_EX_NOREDIRECTIONBITMAP;
-            
-            m_impl->hwnd = CreateWindowExW(childExStyles,
-                                          m_parent->native<false>()->id.c_str(),
-                                          L"",
-                                          childStyles,
-                                          0, // Start at 0,0 in parent
-                                          0,
-                                          (int)(parentWidth * scalingFactor),
-                                          (int)(parentHeight * scalingFactor),
-                                          (HWND)prefs.parentView,
-                                          nullptr,
-                                          m_parent->native<false>()->handle,
-                                          nullptr);
+            float scale = 1.0f;
+            if (processAwareness != PROCESS_DPI_UNAWARE)
+            {
+                // Host is system- or per-monitor DPI aware → respect scaling
+                UINT dpi = GetDpiForWindow((HWND)prefs.parentView);
+                scale    = (float)dpi / 96.0f;
+            }
+
+            auto width = (int)(prefs.parentViewSize.first * scale);
+            auto height = (int)(prefs.parentViewSize.second * scale);
+            // Create the child window at logical size (unscaled for unaware hosts)
+            m_impl->hwnd = CreateWindowExW(
+                WS_EX_CONTROLPARENT | WS_EX_NOREDIRECTIONBITMAP,
+                m_parent->native<false>()->id.c_str(), L"",
+                WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 
+                0, 0, width, height, 
+                (HWND)prefs.parentView, nullptr, m_parent->native<false>()->handle, nullptr);
+
         }
         else
         {

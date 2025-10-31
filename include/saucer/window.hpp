@@ -66,6 +66,7 @@ namespace saucer
         std::string user_agent;
         std::set<std::string> browser_flags;
         void *parentView;
+        std::pair<int, int> parentViewSize{1024, 600};
     };
 
     struct window
